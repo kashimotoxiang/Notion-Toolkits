@@ -3,20 +3,13 @@ import os
 import uuid
 from io import BytesIO
 from pathlib import Path
-from time import sleep
 
 import boto3
 import requests
-import wget
 from notion.client import NotionClient
 from PIL import Image
 
 # imgur
-album = "swsX3RB"
-client_id = 'b142535f88ce193'
-client_secret = 'd651ce00c676c4253171292749a646244b5e9e63'
-_access_token = '6f5ad22455b0aa542ad5c19312dd799edbe7f455'
-_refresh_token = '79d6ad7b7eb54d573ffc9ee60eb87a412dc5d42b'
 writepath = Path("./tmp")
 if not os.path.exists(writepath):
     os.makedirs(writepath)
@@ -30,8 +23,6 @@ notionClient = NotionClient(
     "21f65b444c4f98428e9f1c06031c7f0c5ec27a4a88cb9bddc5fdae2f39ab87690b1b5e60dca8817d15ddd9939573833e4b1c3ab74d5f47bc1f204a570393602245233d4c1b8bb1f098966bf86063"
 )
 
-metadata = {'Metadata': {'Content-Type': 'image/png'}}
-
 
 def convert_img(child_source):
     image_name = str(uuid.uuid4()) + ".png"
@@ -42,7 +33,7 @@ def convert_img(child_source):
     response = s3_client.upload_file(str(image_path),
                                      'kashimotoxiang-blog',
                                      image_name,
-                                     ExtraArgs=metadata)
+                                     ExtraArgs={'ContentType': 'image/png'})
     return "https://kashimotoxiang-blog.s3-us-west-1.amazonaws.com/" + image_name
 
 
@@ -72,7 +63,7 @@ if __name__ == "__main__":
         "https://www.notion.so/Reading-List-fe75079b4869419fb66254e58d34a2d4")
     foo(page)
 
-    image_source_list = [x.source for x in image_block_list][:5]
+    image_source_list = [x.source for x in image_block_list]
     res = async_map(convert_img, image_source_list)
     # convert_img(image_source_list[0])
     for c, i in zip(image_block_list, res):
