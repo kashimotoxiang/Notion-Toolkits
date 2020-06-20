@@ -1,3 +1,5 @@
+import glob
+import itertools
 import multiprocessing
 import os
 import uuid
@@ -25,15 +27,21 @@ notionClient = NotionClient(
 
 
 def convert_img(child_source):
-    image_name = str(uuid.uuid4()) + ".png"
-    image_path = Path("./tmp") / image_name
-    response = requests.get(child_source)
-    img = Image.open(BytesIO(response.content))
-    img.save(image_path, "png")
-    response = s3_client.upload_file(str(image_path),
-                                     'kashimotoxiang-blog',
-                                     image_name,
-                                     ExtraArgs={'ContentType': 'image/png'})
+    print(child_source)
+    try:
+        image_name = str(uuid.uuid4()) + ".png"
+        image_path = Path("./tmp") / image_name
+        response = requests.get(child_source)
+        img = Image.open(BytesIO(response.content))
+        img.save(image_path, "png")
+        response = s3_client.upload_file(
+            str(image_path),
+            'kashimotoxiang-blog',
+            image_name,
+            ExtraArgs={'ContentType': 'image/png'})
+    except:
+        print("ERROR!!!!!!!!!!" + child_source)
+
     return "https://kashimotoxiang-blog.s3-us-west-1.amazonaws.com/" + image_name
 
 
@@ -46,25 +54,37 @@ def async_map(func, data, cpu=(multiprocessing.cpu_count() - 1)):
         return results
 
 
-image_block_list = []
-
-
-def foo(page):
+def foo(link):
+    page = notionClient.get_block(link)
+    image_block_list = []
     for child in page.children:
-        if child._type == "image" and child.source.startswith("http"):
+        if child._type == "image" and child.source.startswith(
+                "http") and not child.source.startswith(
+                    "https://kashimotoxiang-blog.s3-us-west-1.amazonaws.com/"
+                ) and not child.source.endswith("gif"):
             image_block_list.append(child)
-        elif child._type == "page":
-            foo(child)
+    return image_block_list
+
+
+def get_all_links(export_path):
+    links = [
+        "https://www.notion.so/" + path.name.replace(' ', '-')[:-3]
+        for path in Path(export_path).rglob('*.md')
+    ]
+    return links
 
 
 if __name__ == "__main__":
-    # Replace this URL with the URL of the page you want to edit
-    page = notionClient.get_block(
-        "https://www.notion.so/Reading-List-fe75079b4869419fb66254e58d34a2d4")
-    foo(page)
-
-    image_source_list = [x.source for x in image_block_list]
-    res = async_map(convert_img, image_source_list)
-    # convert_img(image_source_list[0])
-    for c, i in zip(image_block_list, res):
-        c.source = i
+    # get all image block
+    links = get_all_links(
+        "/Users/yuxiangli/Downloads/Export-b47f2118-cba9-4797-b656-04cf91486207"
+    )
+    for link in links:
+        image_block_list = foo(link)
+        # upload image to s3
+        if image_block_list:
+            image_source_list = [x.source for x in image_block_list if x]
+            res = async_map(convert_img, image_source_list)
+            # update notion
+            for c, i in zip(image_block_list, res):
+                c.source = i
