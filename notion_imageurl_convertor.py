@@ -12,7 +12,7 @@ from notion.client import NotionClient
 from PIL import Image
 
 notion_export_dir = "/Users/yuxiangli/Downloads/Export-b47f2118-cba9-4797-b656-04cf91486207"
-notion_token_v2 = "21f65b444c4f98428e9f1c06031c7f0c5ec27a4a88cb9bddc5fdae2f39ab87690b1b5e60dca8817d15ddd9939573833e4b1c3ab74d5f47bc1f204a570393602245233d4c1b8bb1f098966bf86063"
+notion_token_v2 = os.getenv("notion_token_v2")
 writepath = Path("./tmp")
 aws_url_prefix = "https://kashimotoxiang-blog.s3-us-west-1.amazonaws.com/"
 aws_bucket_name = 'kashimotoxiang-blog'
