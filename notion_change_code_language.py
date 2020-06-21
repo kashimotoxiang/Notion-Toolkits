@@ -2,8 +2,8 @@ import os
 
 from notion.client import NotionClient
 
-notion_note_links = "https://www.notion.so/CSAPP-_-76a60ac12ec44ad290ba961772b96586"
-code_languages = "C"
+notion_note_links = "https://www.notion.so/GO-358587a971f14e36b961cb4629d842cc"
+code_languages = "Go"
 # notion
 notion_token_v2 = os.getenv("notion_token_v2")
 notion_client = NotionClient(token_v2=notion_token_v2)
